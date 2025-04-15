@@ -35,7 +35,7 @@ class Expr{ // expressions are evaluated!
 public:
 	virtual int eval() = 0;
 	virtual string toString() = 0;
-	virtual ~Expr(){}
+	virtual ~Expr();
 };
 
 class ConstExpr : public Expr{
@@ -60,6 +60,7 @@ class InFixExpr : public Expr{ //erika
 private:
 	vector<Expr *> exprs;
 	vector<string> ops;  // tokens of operators
+
 public:
 	InFixExpr(string expr) {
 
@@ -91,13 +92,45 @@ private:
 	Expr* p_expr;
 public:
 	AssignStmt(string variable){
-		var = variable;
+		if (symboltable.contains(variable)) {
+			var = variable;
+			tokitr++;lexitr++;
+			tokitr++;lexitr++;
+			if (tokitr!=tokens.end() && *tokitr=="t_number") {
+				int val = stoi(*lexitr);
+				tokitr++;lexitr++;
+				if (tokitr!=tokens.end() && *tokitr=="s_semi") {
+					p_expr = new ConstExpr(val);
+				}
+			}
+			else if (*tokitr=="t_id") {
+				string id = *lexitr;
+				tokitr++;lexitr++;
+				if (tokitr!=tokens.end() && *tokitr=="s_semi") {
+					p_expr = new IdExpr(id);
+				}
+			}
+			else {
+				string expr = "";
+				while (tokitr!=tokens.end() && *tokitr=="s_semi") {
+					expr += *lexitr;
+					tokitr++;lexitr++;
+				}
+				p_expr = new InFixExpr(expr);
+			}
+		}
+		else {
+			return;
+		}
 	}
-	~AssignStmt();
+	~AssignStmt() {
+		delete p_expr;
+	}
 	string toString() {
 		return "var: " + var + " expr: " + p_expr->toString();
 	}
 	void execute() {
+		vartable[var] = p_expr->eval();
 
 	}
 };
@@ -127,7 +160,9 @@ private:
 	Expr* p_expr;
 public:
 	ExprOutStmt();
-	~ExprOutStmt();
+	~ExprOutStmt() {
+		delete p_expr;
+	}
 	string toString();
 	void execute();
 };
@@ -170,7 +205,9 @@ private:
 	void buildIf();
 	void buildWhile();
 	void buildStmt(); // erika
-	void buildAssign(); // erika
+	void buildAssign(){// erika
+		insttable.push_back(new AssignStmt(*lexitr));
+	}
 	void buildInput();
 	void buildOutput(); // erika
 	// use one of the following buildExpr methods
@@ -193,28 +230,28 @@ public:
 		// The run method will execute the code in the instruction
 		// table.
 		while (tokitr != tokens.end()) {
-			if (*tokitr == "s_assign") {
+			if (tokitr != tokens.end() && *tokitr == "s_assign") {
 				tokitr--;lexitr--;
-				AssignStmt(*lexitr);
+				buildAssign();
 			}
 			else if (*tokitr == "s_input") {
-
+				buildInput();
 			}
-			else if (*tokitr == "s_output") { // expr and string
-				tokitr++;lexitr++; // (
-				tokitr++;lexitr++; // inside
+			else if (*tokitr == "s_output") {
+				tokitr++;lexitr++;
+				tokitr++;lexitr++;
 				if (tokitr != tokens.end() && *tokitr == "t_text") {
-					StrOutStmt();
+					buildStmt();
 				}
 				else {
-					ExprOutStmt();
+					buildOutput();
 				}
 			}
-			else if (*tokitr == "s_if") { // goTo needed
-				IfStmt();
+			else if (*tokitr == "s_if") {
+				buildIf();
 			}
-			else if (*tokitr == "s_while") { //goTo needed
-				WhileStmt();
+			else if (*tokitr == "s_while") {
+				buildWhile();
 			}
 			tokitr++;lexitr++;
 		}
