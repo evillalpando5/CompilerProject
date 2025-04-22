@@ -19,6 +19,7 @@ map<string, string> vartable; 	// map of variables and their values
 vector<Stmt *> insttable; 		// table of instructions
 map<string, string> symboltable; // map of variables to datatype (i.e. sum t_integer)
 vector<Stmt *>::iterator instrItr; // ADDED for Stmt vector
+map<string, int> precMap;
 
 // Runtime Global Methods
 void dump(); // prints vartable, instable, symboltable
@@ -390,9 +391,8 @@ private:
 	Expr* p_expr;
 	int elsetarget;
 public:
-	WhileStmt(Expr* expr, int target)
-		: Stmt("t_while"), p_expr(expr),elsetarget(target){
-	}
+	WhileStmt();
+	WhileStmt(Expr* expr, int target): Stmt("t_while"), p_expr(expr), elsetarget(target) {}
 	~WhileStmt() {
 		if (p_expr != nullptr) delete p_expr;
 	}
@@ -401,15 +401,15 @@ public:
 	}
 	void execute() {
 		if (ConstIntExpr* e = dynamic_cast<ConstIntExpr*>(p_expr)) {
-			if (e->eval() == 0) {pc = elsetarget;}
+			if (e->eval() == false) {pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (IdIntExpr* e = dynamic_cast<IdIntExpr*>(p_expr)) {
-			if (e->eval() == 0){pc = elsetarget;}
+			if (e->eval() == false){pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (PostIntFixExpr* e = dynamic_cast<PostIntFixExpr*>(p_expr)) {
-			if (e->eval() == 0) {pc = elsetarget;}
+			if (e->eval() == false) {pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
@@ -417,10 +417,12 @@ public:
 			else {pc++;}
 		}
 		else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
-			pc++;
+			if (e->eval() == nullptr) {pc = elsetarget;}
+			else {pc++;}
 		}
 		else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
-			pc++;
+			if (e->eval() == nullptr) {pc = elsetarget;}
+			else {pc++;}
 		}
 		else {
 			cout << "Error non supported expr in while condition" << endl;
@@ -522,9 +524,104 @@ private:
 	}
 	// use one of the following buildExpr methods
 	// void buildExpr(Expr*&);
-	Expr* buildExpr();
+	bool findFirstType() {
+		vector<string>::iterator tempTokItr = tokitr;
+		vector<string>::iterator tempLexItr = lexitr;
+
+		while (*tempTokItr == "s_lparen") {
+			++tempTokItr;
+			++tempLexItr;
+		}
+		string firstToken = *tempTokItr;
+		string firstLexeme = *tempLexItr;
+
+		if (firstToken == "t_number") {return 1;}
+		if (firstToken == "t_text") {return 0;}
+		if (firstToken == "t_id") {
+			if (symboltable[firstLexeme] == "t_number") {
+				return 1;
+			}
+			return 0;
+		};
+	}
+	void typeCheck(const string& token, const string& lexeme, bool isInteger) {
+		if (token == "t_number" && !isInteger) {
+			cout << "Error: Expected string, found number" << endl;
+			exit(-1);
+		}
+		if (token == "t_text" && isInteger) {
+			cerr << "Error: Expected integer, found text"<<endl;
+			exit(-1);
+		}
+		if (token == "t_id") {
+			bool isInt = symboltable[lexeme] == "t_integer";
+			if (isInt != isInteger) {
+				cout << "Error:type mismatch with variable " << lexeme << endl;
+				exit(-1);
+			}
+		}
+	}
+	vector<string> toPostfix(bool isInteger) {
+		vector<string> output;
+		stack<string> opStack;
+
+		while (tokitr != tokens.end() && *tokitr != "s_rparen") {
+			string token = *tokitr;
+			string lexeme = *lexitr;
+
+			if (token == "t_number" || token == "t_text" || token == "t_id") {
+				typeCheck(token, lexeme, isInteger);
+				output.push_back(lexeme);
+			} else if (precMap.count(token)) {
+				while (!opStack.empty() && precMap.count(opStack.top()) &&
+					   precMap[opStack.top()] >= precMap[token]) {
+					output.push_back(opStack.top());
+					opStack.pop();
+					   }
+				opStack.push(token);
+			} else if (token == "s_lparen") {
+				opStack.push(token);
+			} else if (token == "s_rparen") {
+				while (!opStack.empty() && opStack.top() != "s_lparen") {
+					output.push_back(opStack.top());
+					opStack.pop();
+				}
+				if (!opStack.empty()) opStack.pop();
+			}
+
+			++tokitr;
+			++lexitr;
+		}
+
+		while (!opStack.empty()) {
+			output.push_back(opStack.top());
+			opStack.pop();
+		}
+
+		return output;
+	}
+	Expr* buildExpr(){
+		bool isInteger = findFirstType();
+
+		vector<string> postfix = toPostfix(isInteger);
+
+		if (isInteger) {
+			return new PostIntFixExpr(postfix);
+		} else {
+			return new PostStringFixExpr(postfix);
+		}
+	}
 	// headers for populate methods may not change
-	void populateTokenLexemes(istream& infile);
+	void populateTokenLexemes(istream& infile) {
+		string line;
+		getline(infile, line);
+		while(!infile.eof()){
+			int pos = line.find(" ");
+			tokens.push_back(line.substr(0,pos));
+			lexemes.push_back(line.substr(pos + 1));
+			getline(infile, line);
+		}
+	}
 	void populateSymbolTable(istream& infile) {
 		string line;
 		getline(infile, line);
