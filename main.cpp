@@ -55,6 +55,7 @@ public:
 		return value;
 	}
 };
+//Evan
 class IdIntExpr : public Expr{
 	private:
 		string id;
@@ -66,7 +67,7 @@ class IdIntExpr : public Expr{
 		}
 		string toString(){return "id: " + id;}
 	};
-	
+//Evan
 	class IdStringExpr : public Expr{
 	private:
 		string id;
@@ -266,7 +267,7 @@ public:
 		}
 	}
 };
-
+//Evan
 class InputStmt : public Stmt {
 	private:
 		string var;
@@ -347,6 +348,7 @@ public:
 		}
 	}
 };
+//Evan
 class IfStmt : public Stmt {
 	private:
 		Expr *p_expr;
@@ -443,6 +445,7 @@ public:
 		elsetarget = t;
 	}
 };
+//Evan
 class GoToStmt : public Stmt {
 	private:
 		int target;
@@ -461,7 +464,9 @@ class GoToStmt : public Stmt {
 	};
 class Compiler {
 private:
+
 	// IFSTMT   if  (EXPR)  { STMTLIST } ELSEPART
+	//Evan
 	void buildIf() {
 		tokitr++;lexitr++; // skip (
 		Expr* cond = buildExpr();
@@ -549,6 +554,7 @@ private:
 		Expr * p_expr = buildExpr();
 		insttable.push_back(new AssignStmt(variable,  p_expr));
 	}
+	//Evan
 	void buildInput() {
 		string var = "";
 		tokitr++; lexitr++;
@@ -668,6 +674,7 @@ private:
 			getline(infile, line);
 		}
 	}
+	//Evan
 	void populateSymbolTable(istream& infile) {
 		string line;
 		getline(infile, line);
