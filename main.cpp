@@ -24,9 +24,8 @@ vector<Stmt *>::iterator instrItr; // ADDED for Stmt vector
 // Runtime Global Methods
 void dump(); // prints vartable, instable, symboltable
 // You may need a few additional global methods to manipulate the global variables
-
 // Classes Stmt and Expr
-// It is assumed some methods in statement and expression objects will change, and
+// It is assumed some methods in statement and expression objects will change and
 // you may need to add a few new ones.
 class Expr{ // expressions are evaluated!
 public:
@@ -290,6 +289,27 @@ public:
 	void execute();
 };
 
+		~InputStmt();
+
+		string toString() {
+			return "inputted var:" + var;
+		}
+
+		void execute() {
+			string type = symboltable[var];
+			if (type == "t_number") {
+				int x;
+				cin >> x;
+				vartable[var] = x;
+			}
+			if (type == "t_string") {
+				string  x;
+				cin >> x;
+				vartable[var] = x;
+			}
+		}
+	};
+
 class StrOutStmt : public Stmt{
 private:
 	string value;
@@ -297,6 +317,7 @@ public:
 	StrOutStmt(const string val)
 		: Stmt("t_output"), value(val){
 	}
+	~StrOutStmt();
 	string toString() {
 		return "output(" + value + ")";
 	}
@@ -319,21 +340,53 @@ public:
 		return p_expr->toString();
 	}
 	void execute() {
-		 // p_expr->eval();
+		 //p_expr->evalInt();
 	}
 };
-class IfStmt : public Stmt{
-private:
-	Expr* p_expr;
-	int elsetarget;
-public:
-	IfStmt();
-	~IfStmt();
-	string toString() {
+class IfStmt : public Stmt {
+	private:
+		Expr *p_expr;
+		int elsetarget;
 
+	public:
+		IfStmt();
+
+		~IfStmt() {
+			if (p_expr != nullptr)
+				delete p_expr;
+		}
+
+		string toString() {
+			return "Expr:" + p_expr->toString() + " elsetarget:" + to_string(elsetarget);
+		}
+
+		void execute() {
+			if (ConstIntExpr *c = dynamic_cast<ConstIntExpr *>(p_expr)) {
+				if (c->eval() == 0) { pc = elsetarget; } else
+					pc++;
+			}
+			// if (ConstStringExpr *c = dynamic_cast<ConstStringExpr *>(p_expr)) {
+			// 	if (c->eval() != NULL) { pc = elsetarget; } else
+			// 		pc++;
+			// }
+			if (IdIntExpr *c = dynamic_cast<IdIntExpr *>(p_expr)) {
+				if (c->eval() == 0) { pc = elsetarget; } else
+					pc++;
+			}
+			// if (IdStringExpr *c = dynamic_cast<IdStringExpr *>(p_expr)) {
+			// 	if (c->eval() != NULL) { pc = elsetarget; } else
+			// 		pc++;
+			// }
+			if (PostIntFixExpr *c = dynamic_cast<PostIntFixExpr *>(p_expr)) {
+				if (c->eval() == 0) { pc = elsetarget; } else
+					pc++;
+			}
+			// if (PostStringFixExpr *c = dynamic_cast<PostStringFixExpr *>(p_expr)) {
+			// 	if (c->eval() != NULL) { pc = elsetarget; } else
+			// 		pc++;
+			// }
+		}
 	};
-	void execute();
-};
 class WhileStmt : public Stmt{
 private:
 	Expr* p_expr;
@@ -387,10 +440,22 @@ public:
 	GoToStmt();
 	void setTarget(int tar) {
 		target = tar;
+class GoToStmt : public Stmt {
+	private:
+		int target;
+
+	public:
+		GoToStmt() : Stmt("s_goto"), target(-1) {}
+
+		~GoToStmt();
+
+		void setTarget(int t) {
+			target = t;
+		}
+
+		string toString() { return "Go To: " + target; }
+		void execute() { pc = target; }
 	};
-	string toString();
-	void execute();
-};
 class Compiler{
 private:
 	void buildIf();
