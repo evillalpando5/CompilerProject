@@ -8,7 +8,6 @@ using namespace std;
 class Expr;
 class Stmt;
 
-
 // Runtime Global Variables
 int pc;  // program counter
 
@@ -182,31 +181,31 @@ public:
 		// else if (oper == "/") { return a / b; }
 		// else if (oper == "%") { return a % b; }
 		else if (oper == "<="){ if ( a <= b) return "";
-		else return NULL; }
+		else return nullptr; }
 		else if (oper == ">="){ if ( a >= b) return "";
-		else return NULL;}
+		else return nullptr;}
 		else if (oper == ">") {if ( a > b) return "";
-		else return NULL;
+		else return nullptr;
 		}
 		else if (oper == "<") {
 			if ( a < b ) return "";
-			else return NULL;
+			else return nullptr;
 		}
 			else if (oper == "==") {
 				if (a == b) return "";
-				else return NULL;
+				else return nullptr;
 			}
 			else if (oper == "!=" ) {
 				if (a != b) return "";
-				else return NULL;
+				else return nullptr;
 			}
 			else if (oper == "and"){ if (!a.empty() && !b.empty()) return "";
-				else return NULL; }
+				else return nullptr; }
 			else if (oper == "or") {
 				if ( !a.empty() || !b.empty()) return "";
-				else return NULL;
+				else return nullptr;
 			}
-			else { return NULL; }
+			else { return nullptr; }
 	}
 };
 
@@ -224,7 +223,6 @@ public:
 	}
 };
 class AssignStmt : public Stmt{ //erika
-	// TO DO : figure out evaluating
 private:
 	string var;
 	Expr* p_expr;
@@ -240,41 +238,27 @@ public:
 	}
 	void execute() {
 		if (symboltable[var] == "t_integer") {
-			PostIntFixExpr* IntFixExpr = dynamic_cast<PostIntFixExpr*>(p_expr);
-			if (IntFixExpr) {
-				vartable[var] = IntFixExpr->eval();
+			if (ConstIntExpr* e = dynamic_cast<ConstIntExpr*>(p_expr)) {
+				vartable[var] = e->eval();
 			}
-			// ConstIntExpr* IntConstExpr = dynamic_cast<ConstIntExpr*>(p_expr);
-			// else if(IntConstExpr) {
-			// 	vartable[var] = IntConstExpr->eval();
-			// }
-			else {
-				IdIntExpr* IntIDExpr = dynamic_cast<IdIntExpr*>(p_expr);
-				vartable[var] = IntIDExpr->eval();
+			else if (IdIntExpr* e = dynamic_cast<IdIntExpr*>(p_expr)) {
+				vartable[var] = e->eval();
+			}
+			else if (PostIntFixExpr* e = dynamic_cast<PostIntFixExpr*>(p_expr)) {
+				vartable[var] = e->eval();
 			}
 		}
-		// if (ConstIntExpr* e = dynamic_cast<ConstIntExpr*>(p_expr)) {
-		// 	if (e->eval() == 0) {pc = elsetarget;}
-		// 	else {pc++;}
-		// }
-		// else if (IdIntExpr* e = dynamic_cast<IdIntExpr*>(p_expr)) {
-		// 	if (e->eval() == 0){pc = elsetarget;}
-		// 	else {pc++;}
-		// }
-		// else if (PostIntFixExpr* e = dynamic_cast<PostIntFixExpr*>(p_expr)) {
-		// 	if (e->eval() == 0) {pc = elsetarget;}
-		// 	else {pc++;}
-		// }
-		// else if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
-		// 	if (e->eval() == "NULL") {pc = elsetarget;}
-		// 	else {pc++;}
-		// }
-		// else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
-		// 	pc++;
-		// }
-		// else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
-		// 	pc++;
-		// }
+		else {
+			if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
+				vartable[var] = e->eval();
+			}
+			else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
+				vartable[var] = e->eval();
+			}
+			else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
+				vartable[var] = e->eval();
+			}
+		}
 	}
 };
 
@@ -585,13 +569,4 @@ int main(){
 	// return 0;
 	// // if evalutes to false return NULL
 	// // true "
-	//
-	string x = NULL;
-
-	if (1) {
-		cout << "false";
-	}
-	else {
-		cout << "true";
-	}
 }
