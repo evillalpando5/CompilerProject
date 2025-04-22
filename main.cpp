@@ -24,7 +24,7 @@ vector<Stmt *>::iterator instrItr; // ADDED for Stmt vector
 void dump(); // prints vartable, instable, symboltable
 // You may need a few additional global methods to manipulate the global variables
 // Classes Stmt and Expr
-// It is assumed some methods in statement and expression objects will change and
+// It is assumed some methods in statement and expression objects will change, and
 // you may need to add a few new ones.
 class Expr{ // expressions are evaluated!
 public:
@@ -145,9 +145,10 @@ public:
 			cout << *postfixExprItr ;
 		}
 	}
-	string eval() {
+	string* eval() {
 		stack<string> postfixStack;
 		vector<string> output;
+		string* total = new string("") ;
 		for (int i = 0; i < output.size(); i++) {
 			if (isOperand(output[i])) {
 				postfixStack.push(output[i]);
@@ -157,13 +158,14 @@ public:
 				postfixStack.pop();
 				string left = postfixStack.top();
 				postfixStack.pop();
-				string total = applyOperator(left, right, output[i]);
+				string total = *applyOperator(left, right, output[i]);
 				postfixStack.push(total);
 			}
 		}
 		if (postfixStack.size() == 1) {
 			cout << "evaluted successfully: " << postfixStack.top() << endl;
-			return postfixStack.top();
+			*total = postfixStack.top();
+			return total;
 		}
 	}
 	bool isOperand(string term) {
@@ -174,35 +176,36 @@ public:
 		}
 		return true;
 	}
-	string applyOperator(string a, string b, string oper) {
-		if (oper == "+") { return a + b; }
+	string* applyOperator(string a, string b, string oper) {
+		string* res = new string("");
+		if (oper == "+") { *res = a + b; return res; }
 		// else if (oper == "-") { return a - b; }
 		// else if (oper == "*") { return a * b; }
 		// else if (oper == "/") { return a / b; }
 		// else if (oper == "%") { return a % b; }
-		else if (oper == "<="){ if ( a <= b) return "";
+		else if (oper == "<="){ if ( a <= b) return res;
 		else return nullptr; }
-		else if (oper == ">="){ if ( a >= b) return "";
+		else if (oper == ">="){ if ( a >= b) return res;
 		else return nullptr;}
-		else if (oper == ">") {if ( a > b) return "";
+		else if (oper == ">") {if ( a > b) return res;
 		else return nullptr;
 		}
 		else if (oper == "<") {
-			if ( a < b ) return "";
+			if ( a < b ) return res;
 			else return nullptr;
 		}
 			else if (oper == "==") {
-				if (a == b) return "";
+				if (a == b) return res;
 				else return nullptr;
 			}
 			else if (oper == "!=" ) {
-				if (a != b) return "";
+				if (a != b) return res;
 				else return nullptr;
 			}
-			else if (oper == "and"){ if (!a.empty() && !b.empty()) return "";
+			else if (oper == "and"){ if (!a.empty() && !b.empty()) return res;
 				else return nullptr; }
 			else if (oper == "or") {
-				if ( !a.empty() || !b.empty()) return "";
+				if ( !a.empty() || !b.empty()) return res;
 				else return nullptr;
 			}
 			else { return nullptr; }
@@ -239,18 +242,18 @@ public:
 	void execute() {
 		if (symboltable[var] == "t_integer") {
 			if (ConstIntExpr* e = dynamic_cast<ConstIntExpr*>(p_expr)) {
-				vartable[var] = e->eval();
+				vartable[var] = to_string(e->eval());
 			}
 			else if (IdIntExpr* e = dynamic_cast<IdIntExpr*>(p_expr)) {
-				vartable[var] = e->eval();
+				vartable[var] = to_string(e->eval());
 			}
 			else if (PostIntFixExpr* e = dynamic_cast<PostIntFixExpr*>(p_expr)) {
-				vartable[var] = e->eval();
+				vartable[var] = to_string(e->eval());
 			}
 		}
 		else {
 			if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
-				vartable[var] = e->eval();
+				vartable[var] = *(e->eval());
 			}
 			else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
 				vartable[var] = e->eval();
@@ -318,7 +321,24 @@ public:
 		return p_expr->toString();
 	}
 	void execute() {
-		 //p_expr->evalInt();
+		if (ConstIntExpr* e = dynamic_cast<ConstIntExpr*>(p_expr)) {
+			cout << e->eval() << endl;;
+		}
+		else if (IdIntExpr* e = dynamic_cast<IdIntExpr*>(p_expr)) {
+			cout << e->eval() << endl;;
+		}
+		else if (PostIntFixExpr* e = dynamic_cast<PostIntFixExpr*>(p_expr)) {
+			cout << e->eval() << endl;;
+		}
+		else if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
+			cout << e->eval() << endl;;
+		}
+		else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
+			cout << e->eval() << endl;;
+		}
+		else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
+			cout << e->eval() << endl;;
+		}
 	}
 };
 class IfStmt : public Stmt {
@@ -393,7 +413,7 @@ public:
 			else {pc++;}
 		}
 		else if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
-			if (e->eval() == "NULL") {pc = elsetarget;}
+			if (e->eval() == nullptr) {pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
@@ -557,7 +577,7 @@ void dump() {
 		std::cout << "Key: " << it->first << ", Value: " << it->second << std::endl;
 	}
 }
-int main(){
+int main() {
 	// ifstream source("data.txt");
 	// ifstream symbols("vars.txt");
 	// if (!source || !symbols) exit(-1);
@@ -569,4 +589,7 @@ int main(){
 	// return 0;
 	// // if evalutes to false return NULL
 	// // true "
+	// strinh y = "hrllo";
+	// y + "world";
+	// vector "y" "world" +
 }
