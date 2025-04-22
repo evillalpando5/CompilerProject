@@ -285,30 +285,24 @@ public:
 	InputStmt(string variable)
 		: Stmt("t_input"), var(variable){
 	}
-	string toString();
-	void execute();
+	string toString() {
+		return "inputted var:" + var;
+	}
+
+	void execute() {
+		string type = symboltable[var];
+		if (type == "t_number") {
+			int x;
+			cin >> x;
+			vartable[var] = x;
+		}
+		if (type == "t_string") {
+			string  x;
+			cin >> x;
+			vartable[var] = x;
+		}
+	}
 };
-
-		~InputStmt();
-
-		string toString() {
-			return "inputted var:" + var;
-		}
-
-		void execute() {
-			string type = symboltable[var];
-			if (type == "t_number") {
-				int x;
-				cin >> x;
-				vartable[var] = x;
-			}
-			if (type == "t_string") {
-				string  x;
-				cin >> x;
-				vartable[var] = x;
-			}
-		}
-	};
 
 class StrOutStmt : public Stmt{
 private:
@@ -433,30 +427,16 @@ public:
 		elsetarget = t;
 	}
 };
-class GoToStmt : public Stmt{
+class GoToStmt : public Stmt {
 private:
 	int target;
 public:
-	GoToStmt();
-	void setTarget(int tar) {
-		target = tar;
-class GoToStmt : public Stmt {
-	private:
-		int target;
-
-	public:
-		GoToStmt() : Stmt("s_goto"), target(-1) {}
-
-		~GoToStmt();
-
-		void setTarget(int t) {
-			target = t;
-		}
-
-		string toString() { return "Go To: " + target; }
-		void execute() { pc = target; }
-	};
-class Compiler{
+	GoToStmt() : Stmt("s_goto"), target(-1) {}
+	void setTarget(int t) {target = t;}
+	string toString() { return "Go To: " + target; }
+	void execute() { pc = target; }
+};
+class Compiler {
 private:
 	void buildIf();
 	void buildWhile() {
