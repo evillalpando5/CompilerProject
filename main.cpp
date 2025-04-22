@@ -56,26 +56,27 @@ public:
 	}
 };
 class IdIntExpr : public Expr{
-private:
-	string id;
-public:
-	IdIntExpr(const string s){id = s;}
-	int eval() {
-		return stoi(vartable[id]);
-	}
-	string toString(){return "id: " + id;}
-};
-
-class IdStringExpr : public Expr{
-private:
-	string id;
-public:
-	IdStringExpr(const string s){id = s;}
-	string eval() {
-		return vartable[id];
-	}
-	string toString(){return "id: " + id;}
-};
+	private:
+		string id;
+	public:
+		IdIntExpr(string s){id = s;}
+		int eval() {
+			return stoi(vartable[id]);
+	
+		}
+		string toString(){return "id: " + id;}
+	};
+	
+	class IdStringExpr : public Expr{
+	private:
+		string id;
+	public:
+		IdStringExpr(string s){id = s;}
+		string  *eval() {
+			return & vartable[id];
+		}
+		string toString(){return "id: " + id;}
+	};
 class PostIntFixExpr : public Expr { // erika
 	private:
 		vector<string> postfixExpr;  // tokens of operators
@@ -266,31 +267,35 @@ public:
 	}
 };
 
-class InputStmt : public Stmt{
-private:
-	string var;
-public:
+class InputStmt : public Stmt {
+	private:
+		string var;
+
+	public:
 	InputStmt(string variable)
-		: Stmt("t_input"), var(variable){
-	}
-	string toString() {
-		return "inputted var:" + var;
+	: Stmt("s_input"), var(variable) {
 	}
 
-	void execute() {
-		string type = symboltable[var];
-		if (type == "t_number") {
-			int x;
-			cin >> x;
-			vartable[var] = x;
+		~InputStmt();
+
+		string toString() {
+			return "inputted var:" + var;
 		}
-		if (type == "t_string") {
-			string  x;
-			cin >> x;
-			vartable[var] = x;
+
+		void execute() {
+			string type = symboltable[var];
+			if (type == "t_number") {
+				int x;
+				cin >> x;
+				vartable[var] = x;
+			}
+			if (type == "t_string") {
+				string  x;
+				cin >> x;
+				vartable[var] = x;
+			}
 		}
-	}
-};
+	};
 
 class StrOutStmt : public Stmt{
 private:
@@ -348,7 +353,9 @@ class IfStmt : public Stmt {
 		int elsetarget;
 
 	public:
-		IfStmt();
+	IfStmt(Expr* expr, int target)
+	: Stmt("t_if"), p_expr(expr),elsetarget(target){
+	}
 
 		~IfStmt() {
 			if (p_expr != nullptr)
@@ -364,26 +371,29 @@ class IfStmt : public Stmt {
 				if (c->eval() == 0) { pc = elsetarget; } else
 					pc++;
 			}
-			// if (ConstStringExpr *c = dynamic_cast<ConstStringExpr *>(p_expr)) {
-			// 	if (c->eval() != NULL) { pc = elsetarget; } else
-			// 		pc++;
-			// }
-			if (IdIntExpr *c = dynamic_cast<IdIntExpr *>(p_expr)) {
+			else if (ConstStringExpr *c = dynamic_cast<ConstStringExpr *>(p_expr)) {
+				if (c->eval() == nullptr) { pc = elsetarget; } else
+					pc++;
+			}
+			else if (IdIntExpr *c = dynamic_cast<IdIntExpr *>(p_expr)) {
 				if (c->eval() == 0) { pc = elsetarget; } else
 					pc++;
 			}
-			// if (IdStringExpr *c = dynamic_cast<IdStringExpr *>(p_expr)) {
-			// 	if (c->eval() != NULL) { pc = elsetarget; } else
-			// 		pc++;
-			// }
-			if (PostIntFixExpr *c = dynamic_cast<PostIntFixExpr *>(p_expr)) {
+			else if (IdStringExpr *c = dynamic_cast<IdStringExpr *>(p_expr)) {
+				if (c->eval() == nullptr) { pc = elsetarget; } else
+					pc++;
+			}
+			else if (PostIntFixExpr *c = dynamic_cast<PostIntFixExpr *>(p_expr)) {
 				if (c->eval() == 0) { pc = elsetarget; } else
 					pc++;
 			}
-			// if (PostStringFixExpr *c = dynamic_cast<PostStringFixExpr *>(p_expr)) {
-			// 	if (c->eval() != NULL) { pc = elsetarget; } else
-			// 		pc++;
-			// }
+			else if (PostStringFixExpr *c = dynamic_cast<PostStringFixExpr *>(p_expr)) {
+				if (c->eval() == nullptr) { pc = elsetarget; } else
+					pc++;
+			}
+		}
+	void setElseTarget(int t) {
+			elsetarget = t;
 		}
 	};
 class WhileStmt : public Stmt{
@@ -434,17 +444,53 @@ public:
 	}
 };
 class GoToStmt : public Stmt {
-private:
-	int target;
-public:
-	GoToStmt() : Stmt("s_goto"), target(-1) {}
-	void setTarget(int t) {target = t;}
-	string toString() { return "Go To: " + target; }
-	void execute() { pc = target; }
-};
+	private:
+		int target;
+
+	public:
+		GoToStmt() : Stmt("s_goto"), target(-1) {}
+
+		~GoToStmt();
+
+		void setTarget(int t) {
+			target = t;
+		}
+
+		string toString() { return "Go To: " + to_string(target); }
+		void execute() { pc = target; }
+	};
 class Compiler {
 private:
-	void buildIf();
+	// IFSTMT   if  (EXPR)  { STMTLIST } ELSEPART
+	void buildIf() {
+		tokitr++;lexitr++; // skip (
+		Expr* cond = buildExpr();
+		tokitr++;lexitr++; // skip )
+		tokitr++;lexitr++; // skip {
+
+		IfStmt* ifStmt = new IfStmt(cond, -1);
+		insttable.push_back(ifStmt);
+
+		while (*tokitr != "s_rbrace") {
+			buildStmt();
+		}
+		tokitr++;lexitr++; // skip }
+
+		GoToStmt* goToStmt = new GoToStmt();
+		insttable.push_back(goToStmt);
+		ifStmt->setElseTarget(insttable.size());
+
+		if (*tokitr == "else") {
+			tokitr++;lexitr++; // skip else
+			tokitr++;lexitr++; // skip {
+			while (*tokitr != "s_rbrace") {
+				buildStmt();
+			}
+			tokitr++;lexitr++; // skip }
+
+			goToStmt->setTarget(insttable.size());
+		}
+	}
 	void buildWhile() {
 		tokitr++;lexitr++; //skip (
 		Expr* condition = buildExpr();
