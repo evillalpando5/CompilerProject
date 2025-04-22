@@ -7,8 +7,11 @@ using namespace std;
 // You will need these forward references.
 class Expr;
 class Stmt;
+
+
 // Runtime Global Variables
 int pc;  // program counter
+
 vector<string> lexemes;
 vector<string> tokens;
 vector<string>::iterator lexitr;
@@ -16,25 +19,24 @@ vector<string>::iterator tokitr;
 map<string, string> vartable; 	// map of variables and their values
 vector<Stmt *> insttable; 		// table of instructions
 map<string, string> symboltable; // map of variables to datatype (i.e. sum t_integer)
+vector<Stmt *>::iterator instrItr; // ADDED for Stmt vector
+
 // Runtime Global Methods
 void dump(); // prints vartable, instable, symboltable
 // You may need a few additional global methods to manipulate the global variables
-vector<Stmt *>::iterator instrItr; // ADDED for Stmt vector
+
 // Classes Stmt and Expr
-// It is assumed some methods in statement and expression objects will change and
+// It is assumed some methods in statement and expression objects will change, and
 // you may need to add a few new ones.
 class Expr{ // expressions are evaluated!
 public:
-	virtual int evalInt() = 0;
-	virtual string evalStr()= 0;
 	virtual string toString() = 0;
-	virtual ~Expr();
 };
 class ConstIntExpr : public Expr{
 private:
 	int value;
 public:
-	ConstIntExpr(int val) {value = val;}
+	ConstIntExpr(const int val) {value = val;}
 	int eval() {
 		return value;
 	}
@@ -58,10 +60,9 @@ class IdIntExpr : public Expr{
 private:
 	string id;
 public:
-	IdIntExpr(string s){id = s;}
+	IdIntExpr(const string s){id = s;}
 	int eval() {
 		return stoi(vartable[id]);
-
 	}
 	string toString(){return "id: " + id;}
 };
@@ -70,18 +71,64 @@ class IdStringExpr : public Expr{
 private:
 	string id;
 public:
-	IdStringExpr(string s){id = s;}
+	IdStringExpr(const string s){id = s;}
 	string eval() {
 		return vartable[id];
 	}
 	string toString(){return "id: " + id;}
 };
-class PostIntFixExpr : public Expr {
+class PostIntFixExpr : public Expr { // erika
 	private:
 		vector<string> postfixExpr;  // tokens of operators
 	public:
-		PostIntFixExpr(string expr) {	}
-		int eval() {	}
+		PostIntFixExpr(vector<string> inFixConverted) {
+			postfixExpr = inFixConverted;
+		}
+		int eval() {
+			stack<string> postfixStack;
+			vector<string> output;
+			for (int i = 0; i < output.size(); i++) {
+				if (isOperand(output[i])) {
+					postfixStack.push(output[i]);
+				}
+				else {
+					int right = stoi(postfixStack.top());
+					postfixStack.pop();
+					int left = stoi(postfixStack.top());
+					postfixStack.pop();
+					int total = applyOperator(left, right, output[i]);
+					postfixStack.push(to_string(total));
+				}
+			}
+			if (postfixStack.size() == 1) {
+				cout << "evaluted successfully: " << postfixStack.top() << endl;
+				return stoi(postfixStack.top());
+			}
+		}
+		bool isOperand(string term) {
+			for (int i =0; i < term.size(); i++) {
+				if (!isdigit(term[i])) {
+					return false;
+				}
+			}
+			return true;
+		}
+		int applyOperator(int a, int b, string oper) {
+			if (oper == "+") { return a + b; }
+			else if (oper == "-") { return a - b; }
+			else if (oper == "*") { return a * b; }
+			else if (oper == "/") { return a / b; }
+			else if (oper == "%") { return a % b; }
+			else if (oper == "<="){ return a <= b; }
+			else if (oper == ">="){ return a >= b; }
+			else if (oper == ">"){ return a > b; }
+			else if (oper == "<"){ return a < b; }
+			else if (oper == "=="){ return a == b; }
+			else if (oper == "!=" ){ return a != b; }
+			else if (oper == "and"){ return a && b; }
+			else if (oper == "or"){ return a || b; }
+			else { return NULL; }
+		}
 		string toString() {
 			vector<string>::iterator postfixExprItr;
 			while (postfixExprItr != postfixExpr.end()) {
@@ -89,17 +136,78 @@ class PostIntFixExpr : public Expr {
 			}
 		}
 };
-class PostStringFixExpr : public Expr {
+class PostStringFixExpr : public Expr { // erika
 private:
 	vector<string> postfixExpr;  // tokens of operators
 public:
-	PostStringFixExpr(string expr) {	}
-	int eval() {	}
+	PostStringFixExpr(vector<string> postfixExpr) {	}
 	string toString() {
 		vector<string>::iterator postfixExprItr;
 		while (postfixExprItr != postfixExpr.end()) {
 			cout << *postfixExprItr ;
 		}
+	}
+	string eval() {
+		stack<string> postfixStack;
+		vector<string> output;
+		for (int i = 0; i < output.size(); i++) {
+			if (isOperand(output[i])) {
+				postfixStack.push(output[i]);
+			}
+			else {
+				string right = postfixStack.top();
+				postfixStack.pop();
+				string left = postfixStack.top();
+				postfixStack.pop();
+				string total = applyOperator(left, right, output[i]);
+				postfixStack.push(total);
+			}
+		}
+		if (postfixStack.size() == 1) {
+			cout << "evaluted successfully: " << postfixStack.top() << endl;
+			return postfixStack.top();
+		}
+	}
+	bool isOperand(string term) {
+		for (int i =0; i < term.size(); i++) {
+			if (!isdigit(term[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+	string applyOperator(string a, string b, string oper) {
+		if (oper == "+") { return a + b; }
+		// else if (oper == "-") { return a - b; }
+		// else if (oper == "*") { return a * b; }
+		// else if (oper == "/") { return a / b; }
+		// else if (oper == "%") { return a % b; }
+		else if (oper == "<="){ if ( a <= b) return "";
+		else return NULL; }
+		else if (oper == ">="){ if ( a >= b) return "";
+		else return NULL;}
+		else if (oper == ">") {if ( a > b) return "";
+		else return NULL;
+		}
+		else if (oper == "<") {
+			if ( a < b ) return "";
+			else return NULL;
+		}
+			else if (oper == "==") {
+				if (a == b) return "";
+				else return NULL;
+			}
+			else if (oper == "!=" ) {
+				if (a != b) return "";
+				else return NULL;
+			}
+			else if (oper == "and"){ if (!a.empty() && !b.empty()) return "";
+				else return NULL; }
+			else if (oper == "or") {
+				if ( !a.empty() || !b.empty()) return "";
+				else return NULL;
+			}
+			else { return NULL; }
 	}
 };
 
@@ -110,7 +218,6 @@ public:
 	Stmt(string n) {
 		name = n;
 	}
-	// virtual ~Stmt(){};
 	virtual string toString() = 0;
 	virtual void execute() = 0;
 	string getName() {
@@ -123,7 +230,7 @@ private:
 	string var;
 	Expr* p_expr;
 public:
-	AssignStmt(string variable, Expr* expression)
+	AssignStmt(const string variable, Expr* expression)
 		: Stmt("s_assign"), var(variable), p_expr(expression){
 	}
 	~AssignStmt() {
@@ -133,12 +240,42 @@ public:
 		return "var: " + var + " expr: " + p_expr->toString();
 	}
 	void execute() {
-		if (symboltable[var] == "t_integer"){
-			vartable[var] = to_string(p_expr->evalInt());
+		if (symboltable[var] == "t_integer") {
+			PostIntFixExpr* IntFixExpr = dynamic_cast<PostIntFixExpr*>(p_expr);
+			if (IntFixExpr) {
+				vartable[var] = IntFixExpr->eval();
+			}
+			// ConstIntExpr* IntConstExpr = dynamic_cast<ConstIntExpr*>(p_expr);
+			// else if(IntConstExpr) {
+			// 	vartable[var] = IntConstExpr->eval();
+			// }
+			else {
+				IdIntExpr* IntIDExpr = dynamic_cast<IdIntExpr*>(p_expr);
+				vartable[var] = IntIDExpr->eval();
+			}
 		}
-		else {
-			vartable[var] = p_expr->evalStr();
-		}
+		// if (ConstIntExpr* e = dynamic_cast<ConstIntExpr*>(p_expr)) {
+		// 	if (e->eval() == 0) {pc = elsetarget;}
+		// 	else {pc++;}
+		// }
+		// else if (IdIntExpr* e = dynamic_cast<IdIntExpr*>(p_expr)) {
+		// 	if (e->eval() == 0){pc = elsetarget;}
+		// 	else {pc++;}
+		// }
+		// else if (PostIntFixExpr* e = dynamic_cast<PostIntFixExpr*>(p_expr)) {
+		// 	if (e->eval() == 0) {pc = elsetarget;}
+		// 	else {pc++;}
+		// }
+		// else if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
+		// 	if (e->eval() == "NULL") {pc = elsetarget;}
+		// 	else {pc++;}
+		// }
+		// else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
+		// 	pc++;
+		// }
+		// else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
+		// 	pc++;
+		// }
 	}
 };
 
@@ -146,10 +283,9 @@ class InputStmt : public Stmt{
 private:
 	string var;
 public:
-	InputStmt(string varaible)
-		: Stmt("t_input"), var(varaible){
+	InputStmt(string variable)
+		: Stmt("t_input"), var(variable){
 	}
-	~InputStmt();
 	string toString();
 	void execute();
 };
@@ -158,10 +294,9 @@ class StrOutStmt : public Stmt{
 private:
 	string value;
 public:
-	StrOutStmt(string val)
+	StrOutStmt(const string val)
 		: Stmt("t_output"), value(val){
 	}
-	~StrOutStmt();
 	string toString() {
 		return "output(" + value + ")";
 	}
@@ -184,7 +319,7 @@ public:
 		return p_expr->toString();
 	}
 	void execute() {
-		 p_expr->evalInt();
+		 // p_expr->eval();
 	}
 };
 class IfStmt : public Stmt{
@@ -215,19 +350,19 @@ public:
 	}
 	void execute() {
 		if (ConstIntExpr* e = dynamic_cast<ConstIntExpr*>(p_expr)) {
-			if (e->eval() == false) {pc = elsetarget;}
+			if (e->eval() == 0) {pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (IdIntExpr* e = dynamic_cast<IdIntExpr*>(p_expr)) {
-			if (e->eval() == false){pc = elsetarget;}
+			if (e->eval() == 0){pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (PostIntFixExpr* e = dynamic_cast<PostIntFixExpr*>(p_expr)) {
-			if (e->eval() == false) {pc = elsetarget;}
+			if (e->eval() == 0) {pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (PostStringFixExpr* e = dynamic_cast<PostStringFixExpr*>(p_expr)) {
-			if (e->eval() == false) {pc = elsetarget;}
+			if (e->eval() == "NULL") {pc = elsetarget;}
 			else {pc++;}
 		}
 		else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
@@ -250,7 +385,6 @@ private:
 	int target;
 public:
 	GoToStmt();
-	~GoToStmt();
 	void setTarget(int tar) {
 		target = tar;
 	};
@@ -395,15 +529,24 @@ void dump() {
 	}
 }
 int main(){
-	ifstream source("data.txt");
-	ifstream symbols("vars.txt");
-	if (!source || !symbols) exit(-1);
-	Compiler c(source, symbols);
-	c.compile();
-	// might want to call dump to check if everything built correctly
-	// dump();
-	c.run();
-	return 0;
-	// if evalutes to false return NULL
-	// true "
+	// ifstream source("data.txt");
+	// ifstream symbols("vars.txt");
+	// if (!source || !symbols) exit(-1);
+	// Compiler c(source, symbols);
+	// c.compile();
+	// // might want to call dump to check if everything built correctly
+	// // dump();
+	// c.run();
+	// return 0;
+	// // if evalutes to false return NULL
+	// // true "
+	//
+	string x = NULL;
+
+	if (1) {
+		cout << "false";
+	}
+	else {
+		cout << "true";
+	}
 }
