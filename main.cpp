@@ -1,3 +1,4 @@
+// Evan Wells, Erika Villapando, Mark Runkle
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -285,7 +286,7 @@ class InputStmt : public Stmt {
 
 		void execute() {
 			string type = symboltable[var];
-			if (type == "t_number") {
+			if (type == "t_integer") {
 				int x;
 				cin >> x;
 				vartable[var] = x;
