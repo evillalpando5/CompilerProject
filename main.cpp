@@ -719,7 +719,16 @@ public:
 		}
 		return false;
 	}
-	void run();
+	void run() {
+		pc = 0;
+		instrItr = insttable.begin();
+
+		while (pc< insttable.size()) {
+			Stmt* stmt = insttable[pc];
+			stmt->execute();
+		}
+		cout << "Code Successful" << endl;
+	}
 };
 // prints vartable, instable, symboltable
 void dump() {
