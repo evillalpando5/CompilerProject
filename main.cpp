@@ -116,6 +116,12 @@ class PostIntFixExpr : public Expr { // erika
 			return true;
 		}
 		int applyOperator(int a, int b, string oper) {
+			if (vartable.contains(to_string(a)) && symboltable[to_string(a)] == "t_integer") {
+				a = stoi(vartable[to_string(a)]);
+			}
+			if (vartable.contains(to_string(b)) && symboltable[to_string(b)] == "t_integer") {
+				b = stoi(vartable[to_string(b)]);
+			}
 			if (oper == "+") { return a + b; }
 			else if (oper == "-") { return a - b; }
 			else if (oper == "*") { return a * b; }
@@ -182,6 +188,12 @@ public:
 	}
 	string* applyOperator(string a, string b, string oper) {
 		string* res = new string("");
+		if (vartable.contains(a) && symboltable[a] == "t_string") {
+			a = vartable[a];
+		}
+		if (vartable.contains(b) && symboltable[b] == "t_string") {
+			b = vartable[b];
+		}
 		if (oper == "+") { *res = a + b; return res; }
 		// else if (oper == "-") { return a - b; }
 		// else if (oper == "*") { return a * b; }
