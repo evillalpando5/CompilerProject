@@ -1,9 +1,10 @@
-// Evan Wells, Erika Villapando, Mark Runkle
+// Evan Wells, Erika Villapando,Mark Runkle
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <map>
 #include <string>
+#include <stack>
 using namespace std;
 // You will need these forward references.
 class Expr;
@@ -49,8 +50,8 @@ private:
 	string value;
 public:
 	ConstStringExpr(string val) {value = val;}
-	string eval() {
-		return value;
+	string* eval() {
+		return &value;
 	}
 	string toString() {
 		return value;
@@ -64,7 +65,7 @@ class IdIntExpr : public Expr{
 		IdIntExpr(string s){id = s;}
 		int eval() {
 			return stoi(vartable[id]);
-	
+
 		}
 		string toString(){return "id: " + id;}
 	};
@@ -276,7 +277,7 @@ public:
 				vartable[var] = *(e->eval());
 			}
 			else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
-				vartable[var] = e->eval();
+				vartable[var] = *(e->eval());
 			}
 		}
 	}
@@ -444,12 +445,12 @@ public:
 			else {pc++;}
 		}
 		else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
-			// if (e->eval() == nullptr) {pc = elsetarget;}
-			// else {pc++;}
+			if (e->eval() == nullptr) {pc = elsetarget;}
+			else {pc++;}
 		}
 		else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
-			// if (e->eval() == nullptr) {pc = elsetarget;}
-			// else {pc++;}
+			if (e->eval() == nullptr) {pc = elsetarget;}
+			else {pc++;}
 		}
 		else {
 			cout << "Error non supported expr in while condition" << endl;
