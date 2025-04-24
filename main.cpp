@@ -508,9 +508,8 @@ private:
 				buildStmt();
 			}
 			tokitr++;lexitr++; // skip }
-
-			goToStmt->setTarget(insttable.size());
 		}
+			goToStmt->setTarget(insttable.size());
 	}
 	void buildWhile() {
 		tokitr++;lexitr++; //skip (
@@ -573,7 +572,6 @@ private:
 	//Evan
 	void buildInput() {
 		string var = "";
-		tokitr++; lexitr++;
 		tokitr++; lexitr++;
 		var = *lexitr;
 		tokitr++; lexitr++;
