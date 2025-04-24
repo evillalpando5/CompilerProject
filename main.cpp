@@ -272,7 +272,7 @@ public:
 				vartable[var] = *(e->eval());
 			}
 			else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
-				vartable[var] = e->eval();
+				vartable[var] = *(e->eval());
 			}
 			else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
 				vartable[var] = e->eval();
@@ -371,7 +371,6 @@ class IfStmt : public Stmt {
 	IfStmt(Expr* expr, int target)
 	: Stmt("t_if"), p_expr(expr),elsetarget(target){
 	}
-
 		~IfStmt() {
 			if (p_expr != nullptr)
 				delete p_expr;
@@ -409,8 +408,8 @@ class IfStmt : public Stmt {
 		}
 	void setElseTarget(int t) {
 			elsetarget = t;
-		}
-	};
+	}
+};
 class WhileStmt : public Stmt{
 private:
 	Expr* p_expr;
