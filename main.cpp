@@ -1,4 +1,4 @@
-// Evan Wells, Erika Villapando, Mark Runkle
+// Evan Wells, Erika Villapando,Mark Runkle
 #include <iostream>
 #include <fstream>
 #include <vector>
