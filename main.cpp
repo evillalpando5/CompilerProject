@@ -250,7 +250,8 @@ public:
 		: Stmt("s_assign"), var(variable), p_expr(expression){
 	}
 	~AssignStmt() {
-		delete p_expr;
+		if (p_expr != nullptr)
+			delete p_expr;
 	}
 	string toString() {
 		return "var: " + var + " expr: " + p_expr->toString();
@@ -335,7 +336,8 @@ public:
 		: Stmt("t_output"), p_expr(expression){
 	}
 	~ExprOutStmt() {
-		delete p_expr;
+		if (p_expr != nullptr)
+			delete p_expr;
 	}
 	string toString() {
 		return p_expr->toString();
@@ -372,8 +374,9 @@ class IfStmt : public Stmt {
 	: Stmt("t_if"), p_expr(expr),elsetarget(target){
 	}
 		~IfStmt() {
-			if (p_expr != nullptr)
+			if (p_expr != nullptr) {
 				delete p_expr;
+			}
 		}
 
 		string toString() {
@@ -749,14 +752,16 @@ void dump() {
 	}
 }
 int main() {
-	// ifstream source("data.txt");
-	// ifstream symbols("vars.txt");
-	// if (!source || !symbols) exit(-1);
-	// Compiler c(source, symbols);
-	// c.compile();
+	ifstream source("data.txt");
+	ifstream symbols("vars.txt");
+	if (!source || !symbols) exit(-1);
+	Compiler c(source, symbols);
+	c.compile();
 	// // might want to call dump to check if everything built correctly
-	// // dump();
-	// c.run();
+	dump();
+	c.run();
+	dump();
+
 	// return 0;
 	// // if evalutes to false return NULL
 	// // true "
