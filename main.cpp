@@ -442,12 +442,12 @@ public:
 			else {pc++;}
 		}
 		else if (IdStringExpr* e = dynamic_cast<IdStringExpr*>(p_expr)) {
-			// if (e->eval() == nullptr) {pc = elsetarget;}
-			// else {pc++;}
+			if (e->eval() == nullptr) {pc = elsetarget;}
+			else {pc++;}
 		}
 		else if (ConstStringExpr* e = dynamic_cast<ConstStringExpr*>(p_expr)) {
-			// if (e->eval() == nullptr) {pc = elsetarget;}
-			// else {pc++;}
+			if (e->eval() == nullptr) {pc = elsetarget;}
+			else {pc++;}
 		}
 		else {
 			cout << "Error non supported expr in while condition" << endl;
